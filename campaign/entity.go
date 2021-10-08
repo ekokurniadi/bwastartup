@@ -10,8 +10,8 @@ type Campaign struct {
 	Description      string
 	Perks            string
 	BakerCount       int
-	GoalMount        int
-	CurrentMount     int
+	GoalAmount       int
+	CurrentAmount    int
 	Slug             string
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
