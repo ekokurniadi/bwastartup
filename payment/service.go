@@ -1,20 +1,26 @@
 package payment
 
 import (
+	"bwastartup/campaign"
+	"bwastartup/transaction"
 	"bwastartup/user"
 	"strconv"
 
 	midtrans "github.com/veritrans/go-midtrans"
 )
 
-type service struct{}
+type service struct {
+	transactionRepository transaction.Repository
+	campaignRepository    campaign.Repository
+}
 
 type Service interface {
 	GetPaymentURL(transaction Transactions, user user.User) (string, error)
+	ProcessPayment(input transaction.TransactionNotificationInput) error
 }
 
-func NewService() *service {
-	return &service{}
+func NewService(transactionRepository transaction.Repository, campaignRepository campaign.Repository) *service {
+	return &service{transactionRepository, campaignRepository}
 }
 func (s *service) GetPaymentURL(transaction Transactions, user user.User) (string, error) {
 	midclient := midtrans.NewClient()
@@ -42,4 +48,44 @@ func (s *service) GetPaymentURL(transaction Transactions, user user.User) (strin
 	}
 
 	return snapTokenResp.RedirectURL, nil
+}
+
+func (s *service) ProcessPayment(input transaction.TransactionNotificationInput) error {
+	transaction_id, _ := strconv.Atoi(input.OrderID)
+	transaction, err := s.transactionRepository.GetByID(transaction_id)
+
+	if err != nil {
+		return err
+	}
+
+	if input.PaymentType == "credit_card" && input.TransactionStatus == "capture" && input.FraudStatus == "accept" {
+		transaction.Status = "paid"
+	} else if input.TransactionStatus == "settlement" {
+		transaction.Status = "paid"
+	} else if input.TransactionStatus == "deny" || input.TransactionStatus == "expire" || input.TransactionStatus == "cancel" {
+		transaction.Status = "canceled"
+	}
+
+	updatedTransaction, err := s.transactionRepository.Update(transaction)
+
+	if err != nil {
+		return err
+	}
+
+	campaign, err := s.campaignRepository.FindByID(updatedTransaction.CampaignID)
+	if err != nil {
+		return err
+	}
+
+	if updatedTransaction.Status == "paid" {
+		campaign.BakerCount = campaign.BakerCount + 1
+		campaign.CurrentAmount = campaign.CurrentAmount + updatedTransaction.Amount
+
+		_, err := s.campaignRepository.Update(campaign)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+
 }
