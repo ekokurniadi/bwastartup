@@ -8,12 +8,15 @@ import (
 	"bwastartup/payment"
 	"bwastartup/transaction"
 	"bwastartup/user"
+	webHandler "bwastartup/web/handler"
 	"log"
 	"net/http"
+	"path/filepath"
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/cors"
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -39,13 +42,19 @@ func main() {
 	authService := auth.NewService()
 
 	// call handler
-	userHandler := handler.NewUserHandler(userService, authService)
+	userHandler := handler.NewUserHandler(userService, authService, userRepository)
 	campaignHandler := handler.NewCampaignHandler(campaignService)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
+	userWebHandler := webHandler.NewUserHandler(userService)
 
 	router := gin.Default()
 	router.Use(cors.Default())
+	router.LoadHTMLGlob("web/templates/**/*")
+	router.HTMLRender = loadTemplates("./web/templates")
 	router.Static("images", "./images")
+	router.Static("css", "./web/assets/css")
+	router.Static("js", "./web/assets/js")
+	router.Static("webfonts", "./web/assets/webfonts")
 	api := router.Group("/api/v1")
 
 	// endpoint all about users
@@ -53,6 +62,7 @@ func main() {
 	api.POST("/sessions", userHandler.Login)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
+	api.POST("fetch_data", userHandler.GetAllUserOnWeb)
 
 	// endpoint all about campaigns
 	api.GET("/campaigns", campaignHandler.GetCampaigns)
@@ -66,6 +76,9 @@ func main() {
 	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransactions)
 	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransaction)
 	api.POST("/transactions/notification", transactionHandler.GetNotification)
+
+	// web router to user page
+	router.GET("/userweb", userWebHandler.Index)
 
 	router.Run()
 
@@ -118,4 +131,26 @@ func authMiddleware(authService auth.Service, userService user.Service) gin.Hand
 
 	}
 
+}
+
+func loadTemplates(templatesDir string) multitemplate.Renderer {
+	r := multitemplate.NewRenderer()
+
+	layouts, err := filepath.Glob(templatesDir + "/layouts/*.html")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	includes, err := filepath.Glob(templatesDir + "/**/*")
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for _, include := range includes {
+		layoutCopy := make([]string, len(layouts))
+		copy(layoutCopy, layouts)
+		files := append(layoutCopy, include)
+		r.AddFromFiles(filepath.Base(include), files...)
+	}
+	return r
 }

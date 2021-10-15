@@ -13,3 +13,13 @@ type User struct {
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
+
+type UserOnWeb struct {
+	ID             int
+	Number         int
+	Name           string
+	Occupation     string
+	Email          string
+	Link           string
+	AvatarFileName string
+}

@@ -4,19 +4,22 @@ import (
 	"bwastartup/auth"
 	"bwastartup/helper"
 	"bwastartup/user"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type userHandler struct {
-	userService user.Service
-	authService auth.Service
+	userService    user.Service
+	authService    auth.Service
+	userRepository user.Repository
 }
 
-func NewUserHandler(userService user.Service, authService auth.Service) *userHandler {
-	return &userHandler{userService, authService}
+func NewUserHandler(userService user.Service, authService auth.Service, userRepository user.Repository) *userHandler {
+	return &userHandler{userService, authService, userRepository}
 }
 
 func (h *userHandler) RegisterUser(c *gin.Context) {
@@ -173,4 +176,43 @@ func (h *userHandler) UploadAvatar(c *gin.Context) {
 	}
 	response := helper.ApiResponse("Successfully Uploaded", http.StatusOK, "success", data)
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *userHandler) GetAllUserOnWeb(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	var data user.DTJson
+
+	err = json.Unmarshal(body, &data)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	fetchingUsers, err := h.userService.GetAllUserOnWeb(data)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	recordsFiltered, err := h.userRepository.GetTotalUser(data)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	response := helper.WebApiResponse(data.Draw, recordsFiltered, user.FormatWebUsers(fetchingUsers))
+	c.JSON(http.StatusOK, response)
+
 }
