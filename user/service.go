@@ -13,6 +13,7 @@ type Service interface {
 	SaveAvatar(ID int, fileLocation string) (User, error)
 	GetUserByID(ID int) (User, error)
 	GetAllUsers() ([]User, error)
+	UpdateUser(input FormUpdateUserInput) (User, error)
 
 	// service for users on web
 	GetAllUserOnWeb(input DTJson) ([]UserOnWeb, error)
@@ -129,4 +130,19 @@ func (s *service) GetAllUserOnWeb(input DTJson) ([]UserOnWeb, error) {
 		return usersOnweb, err
 	}
 	return usersOnweb, nil
+}
+func (s *service) UpdateUser(input FormUpdateUserInput) (User, error) {
+	user, err := s.repository.FindByID(input.ID)
+	if err != nil {
+		return user, err
+	}
+	user.Name = input.Name
+	user.Email = input.Email
+	user.Occupation = input.Occupation
+
+	updatedUser, err := s.repository.Update(user)
+	if err != nil {
+		return updatedUser, err
+	}
+	return updatedUser, nil
 }

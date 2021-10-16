@@ -29,6 +29,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	// call repository
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
@@ -78,7 +79,13 @@ func main() {
 	api.POST("/transactions/notification", transactionHandler.GetNotification)
 
 	// web router to user page
-	router.GET("/userweb", userWebHandler.Index)
+	router.GET("/users", userWebHandler.Index)
+	router.GET("/users/new", userWebHandler.New)
+	router.POST("/users", userWebHandler.Create)
+	router.GET("/users/edit/:id", userWebHandler.Edit)
+	router.POST("/users/update/:id", userWebHandler.Update)
+	router.GET("/users/avatar/:id", userWebHandler.NewAvatar)
+	router.POST("/users/avatar/:id", userWebHandler.CreateAvatar)
 
 	router.Run()
 

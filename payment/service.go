@@ -19,6 +19,7 @@ func NewService() *service {
 }
 func (s *service) GetPaymentURL(transaction Transactions, user user.User) (string, error) {
 	midclient := midtrans.NewClient()
+	// TODO:GET FROM ENV VARIABLE
 	midclient.ServerKey = ""
 	midclient.ClientKey = ""
 	midclient.APIEnvType = midtrans.Sandbox
