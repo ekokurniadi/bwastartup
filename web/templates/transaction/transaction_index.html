@@ -1,0 +1,116 @@
+{{define "content"}}
+<h2 class="mb-4">List Of Transactions</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <a href="/campaigns/new" class="btn btn-primary mb-3"><i class="fa fa-plus"></i> Add New</a>
+        <table class="table table-bordered table-striped mb-0" id="example1">
+            <thead style="text-align: left;">
+                <tr>
+                    <th width="20px">No</th>
+                    <th>Campaign Name</th>
+                    <th>Status</th>
+                    <th class="sum">Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="3" style="text-align: right;">Total Amount</th>
+                    <th colspan="2"></th>
+                </tr>
+            </tfoot>
+        </table>
+        {{if .data}}
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Notification',
+                text: '{{.data}}',
+
+            })
+        </script>
+        {{end}}
+        <script>
+            $(document).ready(function() {
+                function addCommas(nStr) {
+                    nStr += '';
+                    var x = nStr.split('.');
+                    var x1 = x[0];
+                    var x2 = x.length > 1 ? '.' + x[1] : '';
+                    var rgx = /(\d+)(\d{3})/;
+                    while (rgx.test(x1)) {
+                        x1 = x1.replace(rgx, '$1' + '.' + '$2');
+                    }
+                    return "Rp. " + x1 + x2;
+                }
+                var dataTable = $('#example1').DataTable({
+                    "processing": true,
+                    "serverSide": true,
+                    "scrollX": false,
+                    "language": {
+                        "infoFiltered": "",
+                        "processing": "<td style='text-align:center;width:100%;display:block;'><i class='fa fa-spinner fa-spin' style='font-size:80px'></i> </td>",
+                    },
+                    "order": [],
+                    "lengthMenu": [
+                        [10, 25, 50, 75, 100],
+                        [10, 25, 50, 75, 100]
+                    ],
+                    "ajax": {
+                        url: "http://localhost:8080/api/v1/fetch_transactions",
+                        type: "POST",
+                        dataType: "JSON",
+                        processData: false, // avoid being transformed into a query string,
+                        contentType: 'application/json',
+                        cache: false,
+                        dataSrc: "data",
+                        data: function(d) {
+                            return JSON.stringify(d);
+                        },
+                    },
+                    "columns": [{
+                        "data": "no"
+                    }, {
+                        "data": "name"
+                    }, {
+                        "data": "status"
+                    }, {
+                        "data": "amount",
+                        render: $.fn.dataTable.render.number('.', ',', 0, 'Rp. ')
+                    }, {
+                        "data": "link"
+                    }],
+                    "footerCallback": function(row, data, start, end, display) {
+                        dataTable.columns('.sum', {
+                            page: 'current',
+                        }).every(function() {
+                            var sum = this
+                                .data()
+                                .reduce(function(a, b) {
+                                    var x = parseFloat(a) || 0
+                                    var y = parseFloat(b) || 0
+                                    return x + y
+                                }, 0);
+
+                            $(this.footer()).html(addCommas(sum));
+                        })
+                    }
+                });
+
+                dataTable.on('draw.dt', function() {
+                    var info = dataTable.page.info();
+                    dataTable.column(0, {
+                        search: 'applied',
+                        order: 'applied',
+                        page: 'applied'
+                    }).nodes().each(function(cell, i) {
+                        cell.innerHTML = i + 1 + info.start + ".";
+                    });
+                });
+            });
+        </script>
+    </div>
+</div>
+{{end}}

@@ -17,6 +17,7 @@ type Service interface {
 
 	// service for users on web
 	GetAllUserOnWeb(input DTJson) ([]UserOnWeb, error)
+	DeleteUser(ID int) (bool, error)
 }
 
 type service struct {
@@ -145,4 +146,12 @@ func (s *service) UpdateUser(input FormUpdateUserInput) (User, error) {
 		return updatedUser, err
 	}
 	return updatedUser, nil
+}
+func (s *service) DeleteUser(ID int) (bool, error) {
+	_, err := s.repository.DeleteUserByID(ID)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+
 }

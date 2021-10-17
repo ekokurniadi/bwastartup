@@ -2,9 +2,12 @@ package handler
 
 import (
 	"bwastartup/campaign"
+	"bwastartup/datatables"
 	"bwastartup/helper"
 	"bwastartup/user"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -12,11 +15,12 @@ import (
 )
 
 type campaignHandler struct {
-	service campaign.Service
+	service            campaign.Service
+	campaignRepository campaign.Repository
 }
 
-func NewCampaignHandler(service campaign.Service) *campaignHandler {
-	return &campaignHandler{service}
+func NewCampaignHandler(service campaign.Service, campaignRepository campaign.Repository) *campaignHandler {
+	return &campaignHandler{service, campaignRepository}
 }
 
 func (h *campaignHandler) GetCampaigns(c *gin.Context) {
@@ -167,4 +171,42 @@ func (h *campaignHandler) UploadImage(c *gin.Context) {
 	}
 	response := helper.ApiResponse("Campaign Image Successfully Uploaded", http.StatusOK, "success", data)
 	c.JSON(http.StatusOK, response)
+}
+func (h *campaignHandler) GetAllCampaignsOnWeb(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	var data datatables.DTJson
+
+	err = json.Unmarshal(body, &data)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	fetchingCampaigns, err := h.service.GetAllCampaignsOnWeb(data)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	recordsFiltered, err := h.campaignRepository.GetTotalCampaigns(data)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	response := helper.WebApiResponse(data.Draw, recordsFiltered, campaign.FormatWebCampaigns(fetchingCampaigns))
+	c.JSON(http.StatusOK, response)
+
 }

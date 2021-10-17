@@ -1,26 +1,52 @@
 {{define "content"}}
-<h2 class="mb-4">List Of User</h2>
+<h2 class="mb-4">List Of Campaigns</h2>
 
 <div class="card mb-4">
     <div class="card-body">
-        <a href="/users/new" class="btn btn-primary mb-3"><i class="fa fa-plus"></i> Add New</a>
+        <a href="/campaigns/new" class="btn btn-primary mb-3"><i class="fa fa-plus"></i> Add New</a>
         <table class="table table-bordered table-striped mb-0" id="example1">
             <thead style="text-align: left;">
                 <tr>
                     <th>No</th>
-                    <th>Avatar</th>
+                    <th>Campaign Image</th>
                     <th>Name</th>
-                    <th>Email</th>
-                    <th>Occupation</th>
+                    <th>Short Description</th>
+                    <th class="sum">Goal Amount</th>
                     <th>Action</th>
                 </tr>
             </thead>
             <tbody style="text-align: left;"></tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="4" style="text-align: right;">Total Goal Amount</th>
+                    <th colspan="2"></th>
+                </tr>
+            </tfoot>
         </table>
+        {{if .data}}
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Notification',
+                text: '{{.data}}',
 
+            })
+        </script>
+        {{end}}
         <script>
             $(document).ready(function() {
-                dataTable = $('#example1').DataTable({
+                function addCommas(nStr) {
+                    nStr += '';
+                    var x = nStr.split('.');
+                    var x1 = x[0];
+                    var x2 = x.length > 1 ? '.' + x[1] : '';
+                    var rgx = /(\d+)(\d{3})/;
+                    while (rgx.test(x1)) {
+                        x1 = x1.replace(rgx, '$1' + '.' + '$2');
+                    }
+                    return "Rp. " + x1 + x2;
+                }
+                var dataTable = $('#example1').DataTable({
                     "processing": true,
                     "serverSide": true,
                     "scrollX": false,
@@ -34,7 +60,7 @@
                         [10, 25, 50, 75, 100]
                     ],
                     "ajax": {
-                        url: "http://localhost:8080/api/v1/fetch_data",
+                        url: "http://localhost:8080/api/v1/fetch_campaign",
                         type: "POST",
                         dataType: "JSON",
                         processData: false, // avoid being transformed into a query string,
@@ -48,16 +74,32 @@
                     "columns": [{
                         "data": "no"
                     }, {
-                        "data": "avatar_filename"
+                        "data": "campaign_images"
                     }, {
                         "data": "name"
                     }, {
-                        "data": "email"
+                        "data": "short_description"
                     }, {
-                        "data": "occupation"
+                        "data": "goal_amount",
+                        render: $.fn.dataTable.render.number('.', ',', 0, 'Rp. ')
                     }, {
                         "data": "link"
-                    }]
+                    }],
+                    "footerCallback": function(row, data, start, end, display) {
+                        dataTable.columns('.sum', {
+                            page: 'current',
+                        }).every(function() {
+                            var sum = this
+                                .data()
+                                .reduce(function(a, b) {
+                                    var x = parseFloat(a) || 0
+                                    var y = parseFloat(b) || 0
+                                    return x + y
+                                }, 0);
+
+                            $(this.footer()).html(addCommas(sum));
+                        })
+                    }
                 });
 
                 dataTable.on('draw.dt', function() {
@@ -72,16 +114,6 @@
                 });
             });
         </script>
-        {{if .data}}
-        <script>
-            Swal.fire({
-                icon: 'success',
-                title: 'Notification',
-                text: '{{.data}}',
-
-            })
-        </script>
-        {{end}}
     </div>
 </div>
 {{end}}

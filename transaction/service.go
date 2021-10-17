@@ -2,6 +2,7 @@ package transaction
 
 import (
 	"bwastartup/campaign"
+	"bwastartup/datatables"
 	"bwastartup/payment"
 	"errors"
 	"strconv"
@@ -12,6 +13,9 @@ type Service interface {
 	GetTransactionByUserID(userID int) ([]Transaction, error)
 	CreateTransaction(input CreateTransactionInput) (Transaction, error)
 	ProcessPayment(input TransactionNotificationInput) error
+
+	// web service
+	GetAllTransaction(input datatables.DTJson) ([]TransactionOnWeb, error)
 }
 type service struct {
 	repository         Repository
@@ -118,4 +122,20 @@ func (s *service) ProcessPayment(input TransactionNotificationInput) error {
 	}
 	return nil
 
+}
+
+func (s *service) GetAllTransaction(input datatables.DTJson) ([]TransactionOnWeb, error) {
+	inputTransaction := datatables.DTJson{}
+	inputTransaction.Draw = input.Draw
+	inputTransaction.Columms = input.Columms
+	inputTransaction.Length = input.Length
+	inputTransaction.Orders = input.Orders
+	inputTransaction.Start = input.Start
+	inputTransaction.Search.Value = input.Search.Value
+
+	data, err := s.repository.GetTransactions(inputTransaction)
+	if err != nil {
+		return data, err
+	}
+	return data, nil
 }

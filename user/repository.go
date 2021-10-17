@@ -16,6 +16,7 @@ type Repository interface {
 	// contract for web
 	GetUsers(user DTJson) ([]UserOnWeb, error)
 	GetTotalUser(user DTJson) (int, error)
+	DeleteUserByID(ID int) (User, error)
 }
 
 type repository struct {
@@ -110,4 +111,15 @@ func (r *repository) GetTotalUser(user DTJson) (int, error) {
 		return len(users), err
 	}
 	return len(users), nil
+}
+
+func (r *repository) DeleteUserByID(ID int) (User, error) {
+	var user User
+	err := r.db.Where("id = ?", ID).Delete(&user).Error
+
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }

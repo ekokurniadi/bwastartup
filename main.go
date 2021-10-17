@@ -46,9 +46,13 @@ func main() {
 
 	// call handler
 	userHandler := handler.NewUserHandler(userService, authService, userRepository)
-	campaignHandler := handler.NewCampaignHandler(campaignService)
-	transactionHandler := handler.NewTransactionHandler(transactionService)
+	campaignHandler := handler.NewCampaignHandler(campaignService, campaignRepository)
+	transactionHandler := handler.NewTransactionHandler(transactionService, transactionRepository)
+
+	// web handler
 	userWebHandler := webHandler.NewUserHandler(userService)
+	campaignWebHandler := webHandler.NewCampaignHandler(campaignService)
+	transactionWebHandler := webHandler.NewTransactionHandler(transactionService)
 
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -68,7 +72,7 @@ func main() {
 	api.POST("/sessions", userHandler.Login)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
-	api.POST("fetch_data", userHandler.GetAllUserOnWeb)
+	api.POST("/fetch_data", userHandler.GetAllUserOnWeb)
 
 	// endpoint all about campaigns
 	api.GET("/campaigns", campaignHandler.GetCampaigns)
@@ -76,12 +80,14 @@ func main() {
 	api.POST("/campaigns", authMiddleware(authService, userService), campaignHandler.CreateCampaign)
 	api.PUT("/campaigns/:id", authMiddleware(authService, userService), campaignHandler.UpdateCampaign)
 	api.POST("/campaign-images", authMiddleware(authService, userService), campaignHandler.UploadImage)
+	api.POST("/fetch_campaign", campaignHandler.GetAllCampaignsOnWeb)
 
 	// endpoint all about transactions
 	api.GET("/campaigns/:id/transactions", authMiddleware(authService, userService), transactionHandler.GetCampaignTransactions)
 	api.GET("/transactions", authMiddleware(authService, userService), transactionHandler.GetUserTransactions)
 	api.POST("/transactions", authMiddleware(authService, userService), transactionHandler.CreateTransaction)
 	api.POST("/transactions/notification", transactionHandler.GetNotification)
+	api.POST("/fetch_transactions", transactionHandler.GetAllTransactionsOnWeb)
 
 	// web router to user page
 	router.GET("/users", userWebHandler.Index)
@@ -91,6 +97,13 @@ func main() {
 	router.POST("/users/update/:id", userWebHandler.Update)
 	router.GET("/users/avatar/:id", userWebHandler.NewAvatar)
 	router.POST("/users/avatar/:id", userWebHandler.CreateAvatar)
+	router.GET("/users/delete/:id", userWebHandler.Delete)
+
+	// web router to campaign page
+	router.GET("/campaigns", campaignWebHandler.Index)
+
+	// web router to transactions page
+	router.GET("/transactions", transactionWebHandler.Index)
 
 	router.Run()
 

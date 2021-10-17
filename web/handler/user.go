@@ -136,3 +136,31 @@ func (h *userHandler) CreateAvatar(c *gin.Context) {
 	session.Save()
 	c.Redirect(http.StatusFound, "/users")
 }
+
+func (h *userHandler) Delete(c *gin.Context) {
+	param := c.Param("id")
+	id, _ := strconv.Atoi(param)
+
+	_, err := h.userService.GetUserByID(id)
+	if err != nil {
+		session := sessions.Default(c)
+		session.Set("message", "User not Found")
+		session.Save()
+		c.Redirect(http.StatusFound, "/users")
+		return
+	}
+	_, err = h.userService.DeleteUser(id)
+
+	if err != nil {
+		session := sessions.Default(c)
+		session.Set("message", "User not Found")
+		session.Save()
+		c.Redirect(http.StatusFound, "/users")
+		return
+	}
+	session := sessions.Default(c)
+	session.Set("message", "Delete User Success")
+	session.Save()
+	c.Redirect(http.StatusFound, "/users")
+
+}

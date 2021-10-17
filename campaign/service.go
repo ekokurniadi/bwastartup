@@ -1,6 +1,7 @@
 package campaign
 
 import (
+	"bwastartup/datatables"
 	"errors"
 	"fmt"
 
@@ -13,6 +14,9 @@ type Service interface {
 	CreateCampaign(input CreateCampaignInput) (Campaign, error)
 	UpdateCampaign(inputID GetCampaignDetail, inputData CreateCampaignInput) (Campaign, error)
 	SaveCampaignImage(input CreateCampaignImageInput, fileLocation string) (CampaignImage, error)
+
+	// service for campaign on web
+	GetAllCampaignsOnWeb(input datatables.DTJson) ([]CampaignOnWeb, error)
 }
 
 type service struct {
@@ -119,4 +123,20 @@ func (s *service) SaveCampaignImage(input CreateCampaignImageInput, fileLocation
 		return newCampaignImage, err
 	}
 	return newCampaignImage, nil
+}
+
+func (s *service) GetAllCampaignsOnWeb(input datatables.DTJson) ([]CampaignOnWeb, error) {
+	inputCampaignOnWeb := datatables.DTJson{}
+	inputCampaignOnWeb.Draw = input.Draw
+	inputCampaignOnWeb.Columms = input.Columms
+	inputCampaignOnWeb.Length = input.Length
+	inputCampaignOnWeb.Orders = input.Orders
+	inputCampaignOnWeb.Start = input.Start
+	inputCampaignOnWeb.Search.Value = input.Search.Value
+
+	campaignsOnWeb, err := s.repository.GetCampaigns(inputCampaignOnWeb)
+	if err != nil {
+		return campaignsOnWeb, err
+	}
+	return campaignsOnWeb, nil
 }

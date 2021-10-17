@@ -1,20 +1,24 @@
 package handler
 
 import (
+	"bwastartup/datatables"
 	"bwastartup/helper"
 	"bwastartup/transaction"
 	"bwastartup/user"
+	"encoding/json"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type transactionHandler struct {
-	service transaction.Service
+	service               transaction.Service
+	transactionRepository transaction.Repository
 }
 
-func NewTransactionHandler(service transaction.Service) *transactionHandler {
-	return &transactionHandler{service}
+func NewTransactionHandler(service transaction.Service, transactionRepository transaction.Repository) *transactionHandler {
+	return &transactionHandler{service, transactionRepository}
 }
 
 func (h *transactionHandler) GetCampaignTransactions(c *gin.Context) {
@@ -98,4 +102,43 @@ func (h *transactionHandler) GetNotification(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, input)
+}
+
+func (h *transactionHandler) GetAllTransactionsOnWeb(c *gin.Context) {
+	body, err := ioutil.ReadAll(c.Request.Body)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	var data datatables.DTJson
+
+	err = json.Unmarshal(body, &data)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	fetchingTransactions, err := h.service.GetAllTransaction(data)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	recordsFiltered, err := h.transactionRepository.GetTotalTransactions(data)
+
+	if err != nil {
+		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	response := helper.WebApiResponse(data.Draw, recordsFiltered, transaction.FormatWebTransactions(fetchingTransactions))
+	c.JSON(http.StatusOK, response)
+
 }

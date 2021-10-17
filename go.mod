@@ -14,6 +14,7 @@ require (
 	github.com/gosimple/slug v1.10.0
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/labstack/echo/v4 v4.6.1
+	github.com/leekchan/accounting v1.0.0
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/ugorji/go v1.2.6 // indirect
 	github.com/veritrans/go-midtrans v0.0.0-20210616100512-16326c5eeb00

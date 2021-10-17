@@ -1,6 +1,11 @@
 package campaign
 
-import "gorm.io/gorm"
+import (
+	"bwastartup/datatables"
+	"fmt"
+
+	"gorm.io/gorm"
+)
 
 type Repository interface {
 	FindAll() ([]Campaign, error)
@@ -10,6 +15,10 @@ type Repository interface {
 	Update(campaign Campaign) (Campaign, error)
 	CreateImage(campaignImage CampaignImage) (CampaignImage, error)
 	MarkAllImagesAsNonPrimary(campaignID int) (bool, error)
+
+	// repository for campaign
+	GetCampaigns(campaigns datatables.DTJson) ([]CampaignOnWeb, error)
+	GetTotalCampaigns(campaigns datatables.DTJson) (int, error)
 }
 
 type repository struct {
@@ -85,4 +94,36 @@ func (r *repository) MarkAllImagesAsNonPrimary(campaignID int) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (r *repository) GetCampaigns(campaigns datatables.DTJson) ([]CampaignOnWeb, error) {
+	var campaignOnWeb []CampaignOnWeb
+	sql := "SELECT a.id,a.name,a.short_description,a.goal_amount,(select b.file_name from campaign_images b where b.campaign_id=a.id and b.is_primary=1) as campaign_images from campaigns a WHERE 1=1 "
+
+	if search := campaigns.Search.Value; search != "" {
+		sql = fmt.Sprintf("%s AND (a.name LIKE '%%%s%%' OR a.short_description LIKE '%%%s%%' OR a.goal_amount LIKE '%%%s%%') ", sql, search, search, search)
+	}
+	start := campaigns.Start
+	length := campaigns.Length
+
+	sql = fmt.Sprintf("%s LIMIT %d, %d", sql, start, length)
+	err := r.db.Raw(sql).Scan(&campaignOnWeb).Error
+	if err != nil {
+		return campaignOnWeb, err
+	}
+	return campaignOnWeb, nil
+}
+func (r *repository) GetTotalCampaigns(campaigns datatables.DTJson) (int, error) {
+	var campaignOnWeb []CampaignOnWeb
+	sql := "SELECT a.id,a.name,a.short_description,a.goal_amount,(select b.file_name from campaign_images b where b.campaign_id=a.id and b.is_primary=1) as campaign_images from campaigns a WHERE 1=1 "
+
+	if search := campaigns.Search.Value; search != "" {
+		sql = fmt.Sprintf("%s AND (a.name LIKE '%%%s%%' OR a.short_description LIKE '%%%s%%' OR a.goal_amount LIKE '%%%s%%') ", sql, search, search, search)
+	}
+
+	err := r.db.Raw(sql).Scan(&campaignOnWeb).Error
+	if err != nil {
+		return len(campaignOnWeb), err
+	}
+	return len(campaignOnWeb), nil
 }

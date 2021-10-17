@@ -19,3 +19,10 @@ type Transaction struct {
 	Campaign   campaign.Campaign
 	PaymentURL string
 }
+
+type TransactionOnWeb struct {
+	ID     int
+	Name   string
+	Amount int
+	Status string
+}

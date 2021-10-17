@@ -1,6 +1,11 @@
 package transaction
 
-import "gorm.io/gorm"
+import (
+	"bwastartup/datatables"
+	"fmt"
+
+	"gorm.io/gorm"
+)
 
 type Repository interface {
 	GetByCampaignID(campaignID int) ([]Transaction, error)
@@ -8,6 +13,10 @@ type Repository interface {
 	GetByID(ID int) (Transaction, error)
 	Save(transaction Transaction) (Transaction, error)
 	Update(transaction Transaction) (Transaction, error)
+
+	// repository for campaign
+	GetTransactions(input datatables.DTJson) ([]TransactionOnWeb, error)
+	GetTotalTransactions(input datatables.DTJson) (int, error)
 }
 type repository struct {
 	db *gorm.DB
@@ -66,4 +75,36 @@ func (r *repository) GetByID(ID int) (Transaction, error) {
 	}
 
 	return transaction, nil
+}
+
+func (r *repository) GetTransactions(input datatables.DTJson) ([]TransactionOnWeb, error) {
+	var transactions []TransactionOnWeb
+	sql := "SELECT a.id,b.name,a.status,a.amount from transactions a join campaigns b on a.campaign_id=b.id WHERE 1=1 "
+
+	if search := input.Search.Value; search != "" {
+		sql = fmt.Sprintf("%s AND (b.name LIKE '%%%s%%' OR a.status LIKE '%%%s%%' OR a.amount LIKE '%%%s%%') ", sql, search, search, search)
+	}
+	start := input.Start
+	length := input.Length
+
+	sql = fmt.Sprintf("%s LIMIT %d, %d", sql, start, length)
+	err := r.db.Raw(sql).Scan(&transactions).Error
+	if err != nil {
+		return transactions, err
+	}
+	return transactions, nil
+}
+func (r *repository) GetTotalTransactions(input datatables.DTJson) (int, error) {
+	var transactions []TransactionOnWeb
+	sql := "SELECT a.id,b.name,a.status,a.amount from transactions a join campaigns b on a.campaign_id=b.id WHERE 1=1 "
+
+	if search := input.Search.Value; search != "" {
+		sql = fmt.Sprintf("%s AND (b.name LIKE '%%%s%%' OR a.status LIKE '%%%s%%' OR a.amount LIKE '%%%s%%') ", sql, search, search, search)
+	}
+
+	err := r.db.Raw(sql).Scan(&transactions).Error
+	if err != nil {
+		return len(transactions), err
+	}
+	return len(transactions), nil
 }
