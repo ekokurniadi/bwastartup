@@ -58,3 +58,8 @@ type FormUpdateUserInput struct {
 	Occupation string `form:"occupation" binding:"required"`
 	Error      error
 }
+
+type CallBackResponse struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,12 +19,11 @@ func NewUserHandler(userService user.Service) *userHandler {
 }
 
 func (h *userHandler) Index(c *gin.Context) {
-	users, err := h.userService.GetAllUsers()
-	if err != nil {
-		c.HTML(http.StatusInternalServerError, "error.html", nil)
-		return
-	}
-	c.HTML(http.StatusOK, "user_index.html", gin.H{"users": users})
+	session := sessions.Default(c)
+	data := session.Get("message")
+	session.Set("message", "")
+	session.Save()
+	c.HTML(http.StatusOK, "user_index.html", gin.H{"data": data})
 }
 
 func (h *userHandler) New(c *gin.Context) {
@@ -51,8 +51,11 @@ func (h *userHandler) Create(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "error.html", nil)
 		return
 	}
-
+	session := sessions.Default(c)
+	session.Set("message", "Create User Success")
+	session.Save()
 	c.Redirect(http.StatusFound, "/users")
+
 }
 
 func (h *userHandler) Edit(c *gin.Context) {
@@ -94,6 +97,9 @@ func (h *userHandler) Update(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "error.html", nil)
 		return
 	}
+	session := sessions.Default(c)
+	session.Set("message", "Update User Success")
+	session.Save()
 	c.Redirect(http.StatusFound, "/users")
 }
 
@@ -125,5 +131,8 @@ func (h *userHandler) CreateAvatar(c *gin.Context) {
 		c.HTML(http.StatusInternalServerError, "error.html", nil)
 		return
 	}
+	session := sessions.Default(c)
+	session.Set("message", "Upload User Avatars Success")
+	session.Save()
 	c.Redirect(http.StatusFound, "/users")
 }

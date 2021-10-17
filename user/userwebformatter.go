@@ -29,7 +29,6 @@ func FormatWebUser(user UserOnWeb) UserWebFormatter {
 func FormatWebUsers(users []UserOnWeb) []UserWebFormatter {
 
 	userFormatters := []UserWebFormatter{}
-
 	for _, user := range users {
 		userFormatter := FormatWebUser(user)
 		userFormatters = append(userFormatters, userFormatter)

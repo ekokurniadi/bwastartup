@@ -1,5 +1,6 @@
 {{define "content"}}
 <h2 class="mb-4">List Of User</h2>
+
 <div class="card mb-4">
     <div class="card-body">
         <a href="/users/new" class="btn btn-primary mb-3"><i class="fa fa-plus"></i> Add New</a>
@@ -16,6 +17,16 @@
             </thead>
             <tbody style="text-align: left;"></tbody>
         </table>
+        {{if .data}}
+        <script>
+            Swal.fire({
+                icon: 'success',
+                title: 'Notification',
+                text: '{{.data}}',
+
+            })
+        </script>
+        {{end}}
         <script>
             $(document).ready(function() {
                 dataTable = $('#example1').DataTable({
