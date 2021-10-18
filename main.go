@@ -90,20 +90,20 @@ func main() {
 	api.POST("/fetch_transactions", transactionHandler.GetAllTransactionsOnWeb)
 
 	// web router to user page
-	router.GET("/users", userWebHandler.Index)
-	router.GET("/users/new", userWebHandler.New)
-	router.POST("/users", userWebHandler.Create)
-	router.GET("/users/edit/:id", userWebHandler.Edit)
-	router.POST("/users/update/:id", userWebHandler.Update)
-	router.GET("/users/avatar/:id", userWebHandler.NewAvatar)
-	router.POST("/users/avatar/:id", userWebHandler.CreateAvatar)
-	router.GET("/users/delete/:id", userWebHandler.Delete)
+	router.GET("/users", authAdminMiddleWare(), userWebHandler.Index)
+	router.GET("/users/new", authAdminMiddleWare(), userWebHandler.New)
+	router.POST("/users", authAdminMiddleWare(), userWebHandler.Create)
+	router.GET("/users/edit/:id", authAdminMiddleWare(), userWebHandler.Edit)
+	router.POST("/users/update/:id", authAdminMiddleWare(), userWebHandler.Update)
+	router.GET("/users/avatar/:id", authAdminMiddleWare(), userWebHandler.NewAvatar)
+	router.POST("/users/avatar/:id", authAdminMiddleWare(), userWebHandler.CreateAvatar)
+	router.GET("/users/delete/:id", authAdminMiddleWare(), userWebHandler.Delete)
 
 	// web router to campaign page
-	router.GET("/campaigns", campaignWebHandler.Index)
+	router.GET("/campaigns", authAdminMiddleWare(), campaignWebHandler.Index)
 
 	// web router to transactions page
-	router.GET("/transactions", transactionWebHandler.Index)
+	router.GET("/transactions", authAdminMiddleWare(), transactionWebHandler.Index)
 
 	router.Run()
 
@@ -156,6 +156,18 @@ func authMiddleware(authService auth.Service, userService user.Service) gin.Hand
 
 	}
 
+}
+
+func authAdminMiddleWare() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+
+		userIDSession := session.Get("userID")
+		if userIDSession != nil {
+			c.Redirect(http.StatusFound, "/login")
+			return
+		}
+	}
 }
 
 func loadTemplates(templatesDir string) multitemplate.Renderer {
