@@ -9,6 +9,7 @@ import (
 	"bwastartup/transaction"
 	"bwastartup/user"
 	webHandler "bwastartup/web/handler"
+	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -20,6 +21,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -30,6 +32,11 @@ func main() {
 
 	if err != nil {
 		log.Fatal(err.Error())
+	}
+
+	s := godotenv.Load()
+	if s != nil {
+		fmt.Println(s)
 	}
 
 	// call repository
@@ -53,6 +60,7 @@ func main() {
 	userWebHandler := webHandler.NewUserHandler(userService)
 	campaignWebHandler := webHandler.NewCampaignHandler(campaignService)
 	transactionWebHandler := webHandler.NewTransactionHandler(transactionService)
+	sessionWebHandler := webHandler.NewSessionHandler(userService)
 
 	router := gin.Default()
 	router.Use(cors.Default())
@@ -104,6 +112,9 @@ func main() {
 
 	// web router to transactions page
 	router.GET("/transactions", authAdminMiddleWare(), transactionWebHandler.Index)
+
+	router.GET("/login", sessionWebHandler.New)
+	router.POST("/session", sessionWebHandler.Create)
 
 	router.Run()
 
@@ -163,7 +174,7 @@ func authAdminMiddleWare() gin.HandlerFunc {
 		session := sessions.Default(c)
 
 		userIDSession := session.Get("userID")
-		if userIDSession != nil {
+		if userIDSession == nil {
 			c.Redirect(http.StatusFound, "/login")
 			return
 		}

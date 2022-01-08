@@ -1,6 +1,8 @@
 package transaction
 
-import "time"
+import (
+	"time"
+)
 
 type CampaignTransactionFormatter struct {
 	ID        int       `json:"id"`
@@ -11,6 +13,7 @@ type CampaignTransactionFormatter struct {
 
 func FormatCampaignTransaction(transaction Transaction) CampaignTransactionFormatter {
 	formatter := CampaignTransactionFormatter{}
+
 	formatter.ID = transaction.ID
 	formatter.Name = transaction.User.Name
 	formatter.Amount = transaction.Amount

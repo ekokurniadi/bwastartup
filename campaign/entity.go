@@ -22,6 +22,7 @@ type Campaign struct {
 	UpdatedAt        time.Time
 	CampaignImages   []CampaignImage
 	User             user.User
+	AmountOnText     string
 }
 
 type CampaignImage struct {

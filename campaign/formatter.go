@@ -2,6 +2,8 @@ package campaign
 
 import (
 	"strings"
+
+	"github.com/ekokurniadi/terbilang"
 )
 
 type CampaignFormatter struct {
@@ -22,6 +24,7 @@ type CampaignDetailFormatter struct {
 	Description      string                    `json:"description"`
 	ImageUrl         string                    `json:"image_url"`
 	GoalAmount       int                       `json:"goal_amount"`
+	AmountOnText     string                    `json:"amount_on_text"`
 	CurrentAmount    int                       `json:"current_amount"`
 	BackerCount      int                       `json:"backer_count"`
 	UserID           int                       `json:"user_id"`
@@ -77,6 +80,8 @@ func FormatCampaignDetail(campaign Campaign) CampaignDetailFormatter {
 	campaignDetailFormatter.ShortDescription = campaign.ShortDescription
 	campaignDetailFormatter.Description = campaign.Description
 	campaignDetailFormatter.GoalAmount = campaign.GoalAmount
+	format := terbilang.Terbilang{}
+	campaignDetailFormatter.AmountOnText = format.Generate(int64(campaign.GoalAmount))
 	campaignDetailFormatter.CurrentAmount = campaign.CurrentAmount
 	campaignDetailFormatter.BackerCount = campaign.BakerCount
 	campaignDetailFormatter.UserID = campaign.UserID

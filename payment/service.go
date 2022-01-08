@@ -2,6 +2,7 @@ package payment
 
 import (
 	"bwastartup/user"
+	"os"
 	"strconv"
 
 	midtrans "github.com/veritrans/go-midtrans"
@@ -18,10 +19,11 @@ func NewService() *service {
 	return &service{}
 }
 func (s *service) GetPaymentURL(transaction Transactions, user user.User) (string, error) {
+
 	midclient := midtrans.NewClient()
 	// TODO:GET FROM ENV VARIABLE
-	midclient.ServerKey = ""
-	midclient.ClientKey = ""
+	midclient.ServerKey = os.Getenv("MIDTRANS_SERVEY_KEY")
+	midclient.ClientKey = os.Getenv("MIDTRANS_CLIENT_KEY")
 	midclient.APIEnvType = midtrans.Sandbox
 
 	snapGateway := midtrans.SnapGateway{

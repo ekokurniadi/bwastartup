@@ -132,7 +132,7 @@ func (h *campaignHandler) UploadImage(c *gin.Context) {
 		return
 	}
 	file, err := c.FormFile("file")
-
+	fmt.Println("file :", file)
 	if err != nil {
 		data := gin.H{
 			"is_uploaded": false,
@@ -176,7 +176,7 @@ func (h *campaignHandler) GetAllCampaignsOnWeb(c *gin.Context) {
 	body, err := ioutil.ReadAll(c.Request.Body)
 
 	if err != nil {
-		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		response := helper.ApiResponse(err.Error(), http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
@@ -185,7 +185,7 @@ func (h *campaignHandler) GetAllCampaignsOnWeb(c *gin.Context) {
 	err = json.Unmarshal(body, &data)
 
 	if err != nil {
-		response := helper.ApiResponse("Failed to fetch data", http.StatusBadRequest, "error", nil)
+		response := helper.ApiResponse(err.Error(), http.StatusBadRequest, "error", nil)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
